@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGccdYzfTU6noE5VUQ.ySnE__7mWuQ", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1097,7 +1097,7 @@ function checkPlayerLapsRace() {
                     room.setPlayerTeam(p.id, 0);
 
                     // Solo actualizar estadísticas si hay más de 12 pilotos 
-                    if (room.getPlayerList().length > 0) {
+                    if (room.getPlayerList().length > 5) { // Está en 5 a modo de pruebas
                         playerData.statsUpdated = true; 
 
 						window.getUserStats(p.name)
@@ -2531,12 +2531,18 @@ room.onPlayerLeave = async function(player){
 }
 
 
-room.onRoomLink = function(url){
-	if(isRoomSet == false){
-		console.log(`Room set with url: ${url}`);
-		isRoomSet = true;
-	}
-}
+
+room.onRoomLink = function(url) {
+  if (isRoomSet == false) {
+    console.log(`Room set with url: ${url}`);
+    isRoomSet = true;
+
+    // Llamar a la función expuesta desde el navegador
+    if (window.sendRoomLink) {
+      window.sendRoomLink(url);
+    }
+  }
+};
 
 room.onStadiumChange = function(newStadiumName,byPlayer){
 	byPlayer == null ? console.log(`${newStadiumName} was loaded`) : console.log(`${newStadiumName} was loaded by ${byPlayer.name}`);

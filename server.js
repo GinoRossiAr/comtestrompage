@@ -58,7 +58,8 @@ const Lap = mongoose.model('Lap', lapSchema);
 
 async function bot() {
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',  
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',  
+    headless: false, 
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
@@ -347,10 +348,12 @@ await page.exposeFunction('getTopPlayers', async (stat) => {
     }
 });
 
-
+await page.exposeFunction('sendRoomLink', (url) => {
+  console.log(`Link de la sala: ${url}`);
+});
   
   // Cargar el archivo bot_funcionalAuth.js en la página
-  await page.addScriptTag({ path: 'bot_funcionalAuth.js' });
+  await page.addScriptTag({ path: './bot_funcionalAuth.js' });
 
   console.log('Bot loaded');
 }
