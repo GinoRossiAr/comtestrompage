@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdEZKonqpZi0iqiw.Noav22SJYRU", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdHlT9qGf1eHxbtg.i1r0oS9Tsi4", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1093,8 +1093,8 @@ function checkPlayerLapsRace() {
                 }
 				
                 if (playerData.currentLap > laps) {
-                    finalPosition += 1;
-                    room.sendAnnouncement(`Terminaste en la posición ${finalPosition-1}`, p.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
+                    // finalPosition += 1;
+                    // room.sendAnnouncement(`Terminaste en la posición ${finalPosition-1}`, p.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults); posible bug
                     let scoresTime = exactLapTime - playerData.startTime;
                     raceResults.push({ name: p.name, timeRace: scoresTime });
                     room.setPlayerTeam(p.id, 0);
