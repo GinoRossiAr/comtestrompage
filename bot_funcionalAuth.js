@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcc3bdmXIUGE-svtg._cUiTcSFhXo", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcc8epve8iCGPOErQ.WFjWgvfZ0GU", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1088,7 +1088,7 @@ function checkPlayerLapsRace() {
                         room.sendAnnouncement(`Vuelta rápida: ${lapTime.toFixed(3)}s | ${p.name}`, null, colors.trackRecord, fonts.trackRecord, sounds.trackRecord);
                     }
                 }
-
+				
                 if (playerData.currentLap > laps) {
                     finalPosition += 1;
                     room.sendAnnouncement(`Terminaste en la posición ${finalPosition-1}`, p.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
@@ -1105,10 +1105,6 @@ function checkPlayerLapsRace() {
                         console.log(`p${finalPosition}: ${p.name}`);
                         room.sendAnnouncement(`Terminaste en la posición ${finalPosition}`, p.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
                     }
-                    console.log(`meta: ${p.name}`);
-                    scoresTime = (exactLapTime - startTime);
-                    raceResults.push({ name: p.name, timeRace: scoresTime });
-                    room.setPlayerTeam(p.id, 0);
 
                     // Solo actualizar estadísticas si hay más de 12 pilotos 
                     if (room.getPlayerList().length > 5) { // Está en 5 a modo de pruebas
@@ -1203,9 +1199,8 @@ function checkPlayerLapsRace() {
 							if (result.newRecord) {
 								personalRecordMessage = `🎉 ¡Felicidades! Has establecido un nuevo récord personal en este circuito con un tiempo de ${lapTime.toFixed(3)} segundos.`;
 							} else {
-								personalRecordMessage = `No lograste establecer un nuevo récord personal en este circuito. Diferencia: +${result.difference.toFixed(3)} segundos.`;
+								personalRecordMessage = `Gap con récord personal: +${result.difference.toFixed(3)}s.`;
 							}
-				
 							// Enviar el mensaje de récord personal
 							room.sendAnnouncement(personalRecordMessage, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
 						})
@@ -1274,8 +1269,7 @@ async function showQualyResults() {
 		await wait(500);
 		endTime = Date.now();
 		console.log(`Result line for position ${pos} sent, waited ${endTime - startTime}ms`);
-	
-		if (pos === 1) {
+		if (pos === 1 && room.getPlayerList().length > 5) {
 			// Actualizar la cantidad de PolePositions usando Puppeteer
 			window.updatePolePositions(playerName)
 				.then(() => {
@@ -1812,7 +1806,7 @@ room.onGameTick = function(){
 		sessionStarted = true;
 	};
 	// Si la carrera ha comenzado y pasaron más de 3 segundos comprueba si algún jugador está AFK
-	if (sessionStarted && onRaceSession && room.getScores().time > 3) {
+	if (sessionStarted && onRaceSession && room.getScores().time > 2) {
 		checkAFK();
 	};
 
@@ -1875,9 +1869,9 @@ room.onPlayerChat = function(player, message) {
             room.sendAnnouncement("Comandos disponibles: !help, !formato, !discord, !afk, !back, !rr (solo en clasificación), !sesion, !maps, !speed (en sesión activa), !fl (solo en carrera), !times (solo en clasificación), !bb, !nv", player.id, colors.commands, fonts.commands, sounds.commands);
 			
 			if (!loggedInPlayers[player.name]) {
-				room.sendAnnouncement("ES MUY importante que te registres!")
-				room.sendAnnouncement("Registrate con !register (tu contraseña)")
-				room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)")
+				room.sendAnnouncement("ES MUY importante que te registres! para tener stats y proteger tu cuenta.", player.id, colors.commands, fonts.commands, sounds.commands)
+				room.sendAnnouncement("Registrate con !register (tu contraseña)", player.id, colors.commands, fonts.commands, sounds.commands)
+				room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)", player.id, colors.commands, fonts.commands, sounds.commands)
 			}
             return false;
         } 
@@ -2011,88 +2005,100 @@ room.onPlayerChat = function(player, message) {
 			room.sendAnnouncement("🌟 Opciones de estadísticas disponibles: 'puntos', 'victorias', 'poles', 'carreras', 'podios', 'top10', 'valor'. Usa '!top <opción>' para ver el ranking correspondiente.", player.id, 0xffffff, "normal", 1);
 		
 			window.getTopPlayers(stat)
-				.then(players => {
-					if (!players) {
-						room.sendAnnouncement("🚨 Error al obtener el ranking. Inténtalo nuevamente más tarde.", player.id, 0xff0000, "normal", 1);
-						return;
-					}
-		
-					const topPlayers = players.slice(0, 10);
-					let playerStatValue = '';
-					let playerPosition = '';
-		
-					topPlayers.forEach((topPlayer, index) => {
-						let medal = (index === 0) ? '🥇' : (index === 1) ? '🥈' : (index === 2) ? '🥉' : '➖';
-						let color = (index === 0) ? 0xffd700 : (index === 1) ? 0xc0c0c0 : (index === 2) ? 0xcd7f32 : 0xffffff;
-		
-						let playerStatMessage = '';
-						if (stat === 'puntos') {
-							playerStatMessage = `${topPlayer.statValue} puntos (${topPlayer.stats.carrerasGanadas} victorias en ${topPlayer.stats.carrerasCompletadas} carreras)`;
-						} else if (stat === 'victorias') {
-							playerStatMessage = `${topPlayer.stats.carrerasGanadas} victorias`;
-						} else if (stat === 'poles') {
-							playerStatMessage = `${topPlayer.stats.polepositions} poles en ${topPlayer.stats.carrerasCompletadas} carreras`;
-						} else if (stat === 'carreras') {
-							playerStatMessage = `${topPlayer.stats.carrerasCompletadas} carreras`;
-						} else if (stat === 'podios') {
-							playerStatMessage = `${topPlayer.stats.carrerasPodio} podios en ${topPlayer.stats.carrerasCompletadas} carreras`;
-						} else if (stat === 'top10') {
-							playerStatMessage = `${topPlayer.stats.carrerasTop10} veces en el top 10, en un total de ${topPlayer.stats.carrerasCompletadas} carreras`;
-						} else if (stat === 'valor') {
-							playerStatMessage = `$${topPlayer.valor}`;
-						} else if (stat === 'promedio') {
-							playerStatMessage = `Promedio: ${(topPlayer.statValue).toFixed(2)}`;
-						} else {
-							playerStatMessage = `${topPlayer.statValue} ${stat}`;
-						}
-		
-						room.sendAnnouncement(`${medal} ${topPlayer.rank}. ${topPlayer.nombre} | ${playerStatMessage}`, player.id, color, 1);
-		
-						// Aquí verifica si el jugador actual está en el ranking
-						if (topPlayer.nombre === player.name) {
-							playerStatValue = topPlayer.statValue;
-							playerPosition = topPlayer.rank;
-						}
-					});
-		
-					// Enviar mensaje de ranking personal
-					if (playerPosition && playerStatValue) {
-						let rankingMessage = '';
-						switch (stat) {
-							case 'puntos':
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} puntos.`;
-								break;
-							case 'victorias':
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} victorias.`;
-								break;
-							case 'poles':
-								rankingMessage = `Te encuentras en la posición ${playerPosition} con ${playerStatValue} poles.`;
-								break;
-							case 'carreras':
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} carreras completadas.`;
-								break;
-							case 'podios':
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} podios.`;
-								break;
-							case 'top10':
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} veces en el top 10.`;
-								break;
-							case 'valor':
-								rankingMessage = `Estás en la posición ${playerPosition} con un valor de $${playerStatValue}.`;
-								break;
-							default:
-								rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} ${stat}.`;
-								break;
-						}
-						room.sendAnnouncement(rankingMessage, player.id, 0xffffff, "normal", 1);
-					} else {
-						room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, 0xff0000, "normal", 1);
-					}
-				})
-				.catch(err => {
+			.then(players => {
+				if (!players) {
 					room.sendAnnouncement("🚨 Error al obtener el ranking. Inténtalo nuevamente más tarde.", player.id, 0xff0000, "normal", 1);
-					console.error("Error al obtener el ranking:", err);
+					return;
+				}
+		
+				const topPlayers = players.slice(0, 10); // Top 10
+				let playerStatValue = '';
+				let playerPosition = '';
+		
+				// Mostrar el Top 10
+				topPlayers.forEach((topPlayer, index) => {
+					let medal = (index === 0) ? '🥇' : (index === 1) ? '🥈' : (index === 2) ? '🥉' : '➖';
+					let color = (index === 0) ? 0xffd700 : (index === 1) ? 0xc0c0c0 : (index === 2) ? 0xcd7f32 : 0xffffff;
+		
+					let playerStatMessage = '';
+					if (stat === 'puntos') {
+						playerStatMessage = `${topPlayer.statValue} puntos (${topPlayer.stats.carrerasGanadas} victorias en ${topPlayer.stats.carrerasCompletadas} carreras)`;
+					} else if (stat === 'victorias') {
+						playerStatMessage = `${topPlayer.stats.carrerasGanadas} victorias`;
+					} else if (stat === 'poles') {
+						playerStatMessage = `${topPlayer.stats.polepositions} poles en ${topPlayer.stats.carrerasCompletadas} carreras`;
+					} else if (stat === 'carreras') {
+						playerStatMessage = `${topPlayer.stats.carrerasCompletadas} carreras`;
+					} else if (stat === 'podios') {
+						playerStatMessage = `${topPlayer.stats.carrerasPodio} podios en ${topPlayer.stats.carrerasCompletadas} carreras`;
+					} else if (stat === 'top10') {
+						playerStatMessage = `${topPlayer.stats.carrerasTop10} veces en el top 10, en un total de ${topPlayer.stats.carrerasCompletadas} carreras`;
+					} else if (stat === 'valor') {
+						playerStatMessage = `$${topPlayer.valor}`;
+					} else if (stat === 'promedio') {
+						playerStatMessage = `Promedio: ${(topPlayer.statValue).toFixed(2)}`;
+					} else {
+						playerStatMessage = `${topPlayer.statValue} ${stat}`;
+					}
+		
+					room.sendAnnouncement(`${medal} ${topPlayer.rank}. ${topPlayer.nombre} | ${playerStatMessage}`, player.id, color, 1);
+		
+					// Verifica si el jugador actual está en el Top 10
+					if (topPlayer.nombre === player.name) {
+						playerStatValue = topPlayer.statValue;
+						playerPosition = topPlayer.rank;
+					}
 				});
+		
+				// Si el jugador no estaba en el Top 10, buscar su posición completa en la lista
+				if (!playerPosition && !playerStatValue) {
+					const playerIndex = players.findIndex(p => p.nombre === player.name);
+					if (playerIndex !== -1) {
+						const playerInfo = players[playerIndex];
+						playerStatValue = playerInfo.statValue;
+						playerPosition = playerInfo.rank;
+					}
+				}
+		
+				// Enviar mensaje de ranking personal
+				if (playerPosition && playerStatValue) {
+					let rankingMessage = '';
+					switch (stat) {
+						case 'puntos':
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} puntos.`;
+							break;
+						case 'victorias':
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} victorias.`;
+							break;
+						case 'poles':
+							rankingMessage = `Te encuentras en la posición ${playerPosition} con ${playerStatValue} poles.`;
+							break;
+						case 'carreras':
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} carreras completadas.`;
+							break;
+						case 'podios':
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} podios.`;
+							break;
+						case 'top10':
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} veces en el top 10.`;
+							break;
+						case 'valor':
+							rankingMessage = `Estás en la posición ${playerPosition} con un valor de $${playerStatValue}.`;
+							break;
+						default:
+							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} ${stat}.`;
+							break;
+					}
+					room.sendAnnouncement(rankingMessage, player.id, 0xffffff, "normal", 1);
+				} else {
+					room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, 0xff0000, "normal", 1);
+				}
+			})
+			.catch(err => {
+				room.sendAnnouncement("🚨 Error al obtener el ranking. Inténtalo nuevamente más tarde.", player.id, 0xff0000, "normal", 1);
+				console.error("Error al obtener el ranking:", err);
+			});
+		
 			return false;
 		}
 		
