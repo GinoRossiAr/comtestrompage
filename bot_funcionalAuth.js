@@ -948,41 +948,44 @@ function handleRace(player, playerData, exactLapTime, startTime) {
 	// Obtener el índice actualizado del jugador en la lista de carreras
 	indexRace = raceList.findIndex(r => r.auth === playersID[player.id].auth);
 
-    if (playerData.currentLap > laps) {
-        if (playerData.currentLap > ongoingLap && !leaderFinished) {
-            leaderFinished = true;
-            announceWinner(player);
-
+	if (playerData.currentLap > laps) {
+		if (playerData.currentLap > ongoingLap && !leaderFinished) {
+			leaderFinished = true;
+			announceWinner(player);
+	
 			// Manejar jugadores rezagados
-            let leaderLapsCompleted = raceList[0].lapsCompleted;
+			let leaderLapsCompleted = raceList[0].lapsCompleted;
 			console.log(`leaderLapsCompleted: ${leaderLapsCompleted}`);
-            raceList.forEach(r => {
-                if (leaderLapsCompleted - r.lapsCompleted > 1) {
+			raceList.forEach(r => {
+				if (leaderLapsCompleted - r.lapsCompleted > 1) {
 					console.log(`r.lapsCompleted: ${r.lapsCompleted}`);
-					// -1 porque si no me suma una de más (11 - 9 por ej.)
-                    let lapsLost = leaderLapsCompleted - r.lapsCompleted - 1;
+					let lapsLost = leaderLapsCompleted - r.lapsCompleted - 1;
 					console.log(`lapsLost: ${lapsLost}`);
-                    lappedsList.push({ name: r.name, timeRace: lapsLost });
+					lappedsList.push({ name: r.name, timeRace: lapsLost });
 					console.log(`lapped: ${r.name}, vueltas: +${lapsLost}`);
 					let lapped = room.getPlayerList().find(p => playersID[p.id].auth === r.auth);
 					room.setPlayerTeam(lapped.id, 0);
-                }
-            });
-
-        } else if (leaderFinished) {
-            finalPosition += 1;
-            room.sendAnnouncement(`Terminaste en la posición ${finalPosition}`, player.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
-        }
-        scoresTime = (exactLapTime - startTime);
-        raceResults.push({ name: player.name, timeRace: scoresTime });
-        room.setPlayerTeam(player.id, 0);
-    } else {
-
+				}
+			});
+		} else if (leaderFinished) {
+			finalPosition += 1;
+	
+			// Enviar mensaje solo si el piloto no ha terminado previamente
+			if (playerData.currentPosition !== finalPosition) {
+				room.sendAnnouncement(`Terminaste en la posición ${finalPosition}`, player.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
+				playerData.currentPosition = finalPosition; // Actualizar la posición
+			}
+		}
+	
+		scoresTime = (exactLapTime - startTime);
+		raceResults.push({ name: player.name, timeRace: scoresTime });
+		room.setPlayerTeam(player.id, 0);
+	} else {
 		// Determinar el líder
 		let newLeaderAuth = raceList[0].auth;
 		let newLeader = room.getPlayerList().find(p => playersID[p.id].auth === newLeaderAuth);
 	
-		// Anunciar el líder si ha cambiado, SOLO cuando el lider pasa por meta
+		// Anunciar el líder si ha cambiado, SOLO cuando el líder pasa por meta
 		if (currentLeader == undefined || newLeader) {
 			if (player.auth == newLeader.auth) {
 				setLeader(newLeader);
@@ -990,16 +993,16 @@ function handleRace(player, playerData, exactLapTime, startTime) {
 				currentPosition = indexRace + 1; // Debería ser 1 siempre
 				playerData.currentPosition = currentPosition;
 				console.log(`currentposition lid: ${currentPosition}`);
-			}
-			else if (player.auth != newLeader.auth) {
+			} else if (player.auth != newLeader.auth) {
 				currentPosition++;
 				playerData.currentPosition = currentPosition;
 				console.log(`currentposition: ${currentPosition}`);
 			}
 		}
-
-        room.sendAnnouncement(`Vuelta actual: ${playerData.currentLap}/${laps} | Pos. ${playerData.currentPosition}`, player.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
-    }
+	
+		room.sendAnnouncement(`Vuelta actual: ${playerData.currentLap}/${laps} | Pos. ${playerData.currentPosition}`, player.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
+	}
+	
 
 	// Verificar el estado de raceList después de cada actualización (se igualan todas las instancias si no se abre la lista)
     console.log("raceList:", raceList);
@@ -1126,7 +1129,7 @@ function checkPlayerLapsRace() {
 							window.updateStats(p.name, {
 								carrerasCompletadas: stats.carrerasCompletadas + 1,
 								carrerasGanadas: (finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas,
-								carrerasPodio: (finalPosition - 1 <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
+								carrerasPodio: (finalPosition - 1 <= 4) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
 								carrerasTop10: (finalPosition - 1 <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10,
 								puntos: stats.puntos + puntosGanados,
 								// Cálculo del valor del jugador según la fórmula
@@ -1205,7 +1208,7 @@ function checkPlayerLapsRace() {
 							room.sendAnnouncement(personalRecordMessage, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
 						})
 						.catch(err => {
-							room.sendAnnouncement("🚫 Error al guardar la vuelta.", p.id, colors.error, fonts.error, sounds.error); // Se le imprime al jugador para que nos pueda avisar.
+							room.sendAnnouncement("🚫 Error al guardar la vuelta. Posiblemente no estés registrado.", p.id, colors.error, fonts.error, sounds.error); // Se le imprime al jugador para que nos pueda avisar.
 							console.error("Error al guardar la vuelta:", err);
 						});
 				}
@@ -1412,7 +1415,7 @@ function checkPlayerLapsQualy() {
 								if (result.newRecord) {
 									personalRecordMessage = `🎉 Nuevo récord personal en este circuito: ${lapTime.toFixed(3)} segundos.`;
 								} else {
-									personalRecordMessage = `No lograste establecer un nuevo récord personal en este circuito. Diferencia: +${result.difference.toFixed(3)} segundos.`;
+									personalRecordMessage = `Gap con record personal: +${result.difference.toFixed(3)}s.`;
 								}
 					
 								// Enviar el mensaje de récord personal
@@ -1869,9 +1872,10 @@ room.onPlayerChat = function(player, message) {
             room.sendAnnouncement("Comandos disponibles: !help, !formato, !discord, !afk, !back, !rr (solo en clasificación), !sesion, !maps, !speed (en sesión activa), !fl (solo en carrera), !times (solo en clasificación), !bb, !nv", player.id, colors.commands, fonts.commands, sounds.commands);
 			
 			if (!loggedInPlayers[player.name]) {
-				room.sendAnnouncement("ES MUY importante que te registres! para tener stats y proteger tu cuenta.", player.id, colors.commands, fonts.commands, sounds.commands)
-				room.sendAnnouncement("Registrate con !register (tu contraseña)", player.id, colors.commands, fonts.commands, sounds.commands)
-				room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)", player.id, colors.commands, fonts.commands, sounds.commands)
+				room.sendAnnouncement("ES MUY importante que te registres! para tener stats y proteger tu cuenta.", player.id, colors.commands, fonts.commands, sounds.commands);
+				room.sendAnnouncement("Registrate con !register (tu contraseña).   ejemplo: !register soycolapinto", player.id, colors.commands, fonts.commands, sounds.commands);
+				room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña).   ejemplo: !login soycolapinto", player.id, colors.commands, fonts.commands, sounds.commands);
+				room.sendAnnouncement("No te olvides la contraseña", player.id, colors.commands, fonts.commands, sounds.commands);
 			}
             return false;
         } 
@@ -2091,7 +2095,7 @@ room.onPlayerChat = function(player, message) {
 					}
 					room.sendAnnouncement(rankingMessage, player.id, 0xffffff, "normal", 1);
 				} else {
-					room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, 0xff0000, "normal", 1);
+					room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, colors.mapInfo, "normal", 1);
 				}
 			})
 			.catch(err => {
@@ -2171,13 +2175,28 @@ room.onPlayerChat = function(player, message) {
 						let valor = stats.valor;
 						let reputacion = '';
 		
-						if (valor >= 5000) reputacion = "Leyenda";
-						else if (valor >= 3500) reputacion = "Campeón";
-						else if (valor >= 2500) reputacion = "Estrella";
-						else if (valor >= 1500) reputacion = "Competitivo";
-						else if (valor >= 800) reputacion = "Promesa";
-						else if (valor >= 300) reputacion = "Aficionado";
-						else reputacion = "Principiante";
+						if (valor >= 75000) reputacion = "Leyenda III";
+						else if (valor >= 60000) reputacion = "Leyenda II";
+						else if (valor >= 50000) reputacion = "Leyenda I";
+						else if (valor >= 40000) reputacion = "Campeón III";
+						else if (valor >= 35000) reputacion = "Campeón II";
+						else if (valor >= 30000) reputacion = "Campeón I";
+						else if (valor >= 25000) reputacion = "Estrella III";
+						else if (valor >= 20000) reputacion = "Estrella II";
+						else if (valor >= 15000) reputacion = "Estrella I";
+						else if (valor >= 10000) reputacion = "Competitivo III";
+						else if (valor >= 7500) reputacion = "Competitivo II";
+						else if (valor >= 5000) reputacion = "Competitivo I";
+						else if (valor >= 3500) reputacion = "Promesa III";
+						else if (valor >= 2500) reputacion = "Promesa II";
+						else if (valor >= 1500) reputacion = "Promesa I";
+						else if (valor >= 1100) reputacion = "Aficionado III";
+						else if (valor >= 800) reputacion = "Aficionado II";
+						else if (valor >= 500) reputacion = "Aficionado I";
+						else if (valor >= 300) reputacion = "Principiante III";
+						else if (valor >= 150) reputacion = "Principiante II";
+						else reputacion = "Principiante I";
+						
 		
 						// Formatear y enviar el mensaje de estadísticas en una sola línea
 						room.sendAnnouncement(`📊 Estadísticas de ${targetUser}:\n 🏁 Carreras completadas: ${stats.carrerasCompletadas} | 🥇 Pole positions: ${stats.polepositions} | 🏆 Carreras ganadas: ${stats.carrerasGanadas} | 🥈 Podios: ${stats.carrerasPodio} | 🥉 Carreras en top 10: ${stats.carrerasTop10} | 💰 Puntos: ${stats.puntos} | 📈 Promedio: ${promedio.toFixed(2)} | 💎 Valor: $${valor} | 🌟 Reputación: ${reputacion}`, player.id);
@@ -2498,9 +2517,9 @@ room.onPlayerJoin = function(player) {
                     }
                 } else {
                     room.sendAnnouncement(`📢 No estás registrado. Usa !register <password> para registrarte.`, player.id, 0x2FDE52, "italic", 2);
-					room.sendAnnouncement("ES MUY importante que te registres!")
-					room.sendAnnouncement("Registrate con !register (tu contraseña)")
-					room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)")
+					room.sendAnnouncement("ES MUY importante que te registres!", player.id, 0x2FDE52, "italic", 2)
+					room.sendAnnouncement("Registrate con !register (tu contraseña)", player.id, 0x2FDE52, "italic", 2)
+					room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)", player.id, 0x2FDE52, "italic", 2)
                 }
             })
             .catch(err => {
