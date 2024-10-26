@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGccdYzfTU6noE5VUQ.ySnE__7mWuQ", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcc3bdmXIUGE-svtg._cUiTcSFhXo", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1096,6 +1096,20 @@ function checkPlayerLapsRace() {
                     raceResults.push({ name: p.name, timeRace: scoresTime });
                     room.setPlayerTeam(p.id, 0);
 
+                    if (playerData.currentLap > ongoingLap && !leaderFinished) {
+                        leaderFinished = true;
+                        announceWinner(p);
+                        console.log(`winnerif: ${p.name}`);
+                    } else if (leaderFinished) {
+                        finalPosition += 1;
+                        console.log(`p${finalPosition}: ${p.name}`);
+                        room.sendAnnouncement(`Terminaste en la posición ${finalPosition}`, p.id, colors.playerInResults, fonts.playerInResults, sounds.playerInResults);
+                    }
+                    console.log(`meta: ${p.name}`);
+                    scoresTime = (exactLapTime - startTime);
+                    raceResults.push({ name: p.name, timeRace: scoresTime });
+                    room.setPlayerTeam(p.id, 0);
+
                     // Solo actualizar estadísticas si hay más de 12 pilotos 
                     if (room.getPlayerList().length > 5) { // Está en 5 a modo de pruebas
                         playerData.statsUpdated = true; 
@@ -1132,7 +1146,26 @@ function checkPlayerLapsRace() {
                         console.log('No se actualizaron estadísticas porque no hubo más de 12 pilotos en la carrera.');
                     }
                 } else {
-                    room.sendAnnouncement(`Vuelta actual: ${playerData.currentLap}/${laps}`, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
+                    if (currentLeader == undefined || afkPlayers[currentLeader.id]) {
+                        setLeader(p);
+                        currentPosition = 0;
+                        if (playerData.currentLap <= laps) {
+                            announceLeader(p);
+                        } else {
+                            leaderFinished = true;
+                            announceWinner(p);
+                        }
+                    } else if (playerData.currentLap > ongoingLap) {
+                        setLeader(p);
+                        announceLeader(p);
+                        currentPosition = 0;
+                    }
+					if (playerData.currentLap == 1) {
+						startTime = currentTime;
+					}
+                    currentPosition += 1;
+                    room.sendAnnouncement(`Vuelta actual: ${playerData.currentLap}/${laps} | Pos. ${currentPosition}`, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
+                    console.log(`pos: ${currentPosition} waso: ${p.name}`);
                 }
 
                 // Guardar la vuelta en la base de datos
@@ -1361,47 +1394,46 @@ function checkPlayerLapsQualy() {
                             room.sendAnnouncement(`Pos. ${indexQualy + 1} | ${p.name} | ${serializeSeconds(lapTime)}`, p.id, colors.newBestLapTimePlayer, fonts.newBestLapTimePlayer, sounds.newBestLapTimePlayer);
                         }
                     }
+
+						window.saveLap(p.name, _Circuit.Name, lapTime)
+							.then((result) => {
+								// Variable para el mensaje sobre récord personal
+								let personalRecordMessage = '';
+					
+								// Mensaje si se establece un nuevo récord global
+								if (result.newRecord && result.globalRecord) {
+									const previousHolder = result.previousGlobalHolder || "Nadie"; // Manejo de caso donde no hay poseedor anterior
+									room.getPlayerList().forEach(_player => {
+										room.sendAnnouncement(
+											`🚨 ATENCIÓN! Nuevo récord global de ${p.name}: ${lapTime.toFixed(3)}. 🎖️`,
+											_player.id,
+											0xA5FF78,
+											fonts.newBestLapTimePlayer,
+											sounds.newBestLapTimePlayer
+										);
+									});
+								}
+					
+								// Mensaje si se mejora el récord personal
+								if (result.newRecord) {
+									personalRecordMessage = `🎉 Nuevo récord personal en este circuito: ${lapTime.toFixed(3)} segundos.`;
+								} else {
+									personalRecordMessage = `No lograste establecer un nuevo récord personal en este circuito. Diferencia: +${result.difference.toFixed(3)} segundos.`;
+								}
+					
+								// Enviar el mensaje de récord personal
+								room.sendAnnouncement(personalRecordMessage, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
+							})
+							.catch(err => {
+								room.sendAnnouncement("🚫 Error al guardar la vuelta.", p.id, colors.error, fonts.error, sounds.error); // Se le imprime al jugador para que nos pueda avisar.
+								console.error("Error al guardar la vuelta:", err);
+							});
                 } else {
                     playerData.invalidQualyLap = false;
                 }
                 room.sendAnnouncement(`🏎️ Comenzando vuelta lanzada`, p.id, 0x2FDE52);
 
                 // Almacenar el récord personal y global
-                if (playerData.currentLap > 1) {
-                    window.saveLap(p.name, _Circuit.Name, lapTime)
-                        .then((result) => {
-                            // Variable para el mensaje sobre récord personal
-                            let personalRecordMessage = '';
-                
-                            // Mensaje si se establece un nuevo récord global
-                            if (result.newRecord && result.globalRecord) {
-                                const previousHolder = result.previousGlobalHolder || "Nadie"; // Manejo de caso donde no hay poseedor anterior
-                                room.getPlayerList().forEach(_player => {
-                                    room.sendAnnouncement(
-                                        `🚨 ATENCIÓN! ${p.name} acaba de marcar un nuevo récord global del circuito, con su tiempo de ${lapTime.toFixed(3)}. 🎖️`,
-                                        _player.id,
-                                        0xA5FF78,
-                                        fonts.newBestLapTimePlayer,
-                                        sounds.newBestLapTimePlayer
-                                    );
-                                });
-                            }
-                
-                            // Mensaje si se mejora el récord personal
-                            if (result.newRecord) {
-                                personalRecordMessage = `🎉 ¡Felicidades! Has establecido un nuevo récord personal en este circuito con un tiempo de ${lapTime.toFixed(3)} segundos.`;
-                            } else {
-                                personalRecordMessage = `No lograste establecer un nuevo récord personal en este circuito. Diferencia: +${result.difference.toFixed(3)} segundos.`;
-                            }
-                
-                            // Enviar el mensaje de récord personal
-                            room.sendAnnouncement(personalRecordMessage, p.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
-                        })
-                        .catch(err => {
-                            room.sendAnnouncement("🚫 Error al guardar la vuelta.", p.id, colors.error, fonts.error, sounds.error); // Se le imprime al jugador para que nos pueda avisar.
-                            console.error("Error al guardar la vuelta:", err);
-                        });
-                }
             }
         }
     });
@@ -1841,6 +1873,12 @@ room.onPlayerChat = function(player, message) {
         } 
         else if (messageNormalized == commands.help) {
             room.sendAnnouncement("Comandos disponibles: !help, !formato, !discord, !afk, !back, !rr (solo en clasificación), !sesion, !maps, !speed (en sesión activa), !fl (solo en carrera), !times (solo en clasificación), !bb, !nv", player.id, colors.commands, fonts.commands, sounds.commands);
+			
+			if (!loggedInPlayers[player.name]) {
+				room.sendAnnouncement("ES MUY importante que te registres!")
+				room.sendAnnouncement("Registrate con !register (tu contraseña)")
+				room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)")
+			}
             return false;
         } 
         else if (messageNormalized == commands.mapInfo) {
@@ -1979,7 +2017,7 @@ room.onPlayerChat = function(player, message) {
 						return;
 					}
 		
-					const topPlayers = players.slice(0, 20);
+					const topPlayers = players.slice(0, 10);
 					let playerStatValue = '';
 					let playerPosition = '';
 		
@@ -2454,6 +2492,9 @@ room.onPlayerJoin = function(player) {
                     }
                 } else {
                     room.sendAnnouncement(`📢 No estás registrado. Usa !register <password> para registrarte.`, player.id, 0x2FDE52, "italic", 2);
+					room.sendAnnouncement("ES MUY importante que te registres!")
+					room.sendAnnouncement("Registrate con !register (tu contraseña)")
+					room.sendAnnouncement("y posteriormente ingresá con !login (tu contraseña)")
                 }
             })
             .catch(err => {
