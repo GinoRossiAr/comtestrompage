@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdHwT0EHN1GyemHA.GSInC-jBbXo", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdKULa9UlS4wO4ew.gi13QX0Wdfk", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1110,7 +1110,7 @@ function checkPlayerLapsRace() {
                     }
 
                     // Solo actualizar estadísticas si hay más de 12 pilotos 
-                    if (room.getPlayerList().length > 5) { // Está en 5 a modo de pruebas
+                    if (room.getPlayerList().length > 3) { // Está en 3 a modo de pruebas
                         playerData.statsUpdated = true; 
 
 						window.getUserStats(p.name)
@@ -1123,13 +1123,14 @@ function checkPlayerLapsRace() {
 							(4 * ((finalPosition - 1 <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio)) +
 							(1 * ((finalPosition - 1 <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10)) +
 							(0.1 * (stats.puntos + puntosGanados)) -
-							(0.05 * (stats.carrerasCompletadas + 1 - ((finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)))
+							(0.07 * (stats.carrerasCompletadas + 1 - ((finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)))
 					
 							// Actualización de estadísticas básicas
+							finalPosition = finalPosition - 1 // descubrir por qué esta variable se rompe tanto acá
 							window.updateStats(p.name, {
 								carrerasCompletadas: stats.carrerasCompletadas + 1,
 								carrerasGanadas: (finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas,
-								carrerasPodio: (finalPosition - 1 <= 4) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
+								carrerasPodio: (finalPosition - 1 <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
 								carrerasTop10: (finalPosition - 1 <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10,
 								puntos: stats.puntos + puntosGanados,
 								// Cálculo del valor del jugador según la fórmula
@@ -1272,7 +1273,7 @@ async function showQualyResults() {
 		await wait(500);
 		endTime = Date.now();
 		console.log(`Result line for position ${pos} sent, waited ${endTime - startTime}ms`);
-		if (pos === 1 && room.getPlayerList().length > 5) {
+		if (pos === 1 && room.getPlayerList().length > 3) {
 			// Actualizar la cantidad de PolePositions usando Puppeteer
 			window.updatePolePositions(playerName)
 				.then(() => {
