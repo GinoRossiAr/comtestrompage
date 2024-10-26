@@ -559,7 +559,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdKULa9UlS4wO4ew.gi13QX0Wdfk", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdMuMJwI7LTMwyvA.Nvw26fx6ahY", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -1010,18 +1010,6 @@ function handleRace(player, playerData, exactLapTime, startTime) {
 
 /// --- SISTEMA DE PUNTOS, SALA PÚBLICA
 
-const puntosPorPosicion = {
-    1: 25,
-    2: 18,
-    3: 15,
-    4: 12,
-    5: 10,
-    6: 8,
-    7: 6,
-    8: 4,
-    9: 2,
-    10: 1
-};
 
 function checkPlayerLapsRace() {
     var players = getPlayersInTrack();
@@ -1110,32 +1098,45 @@ function checkPlayerLapsRace() {
                     }
 
                     // Solo actualizar estadísticas si hay más de 12 pilotos 
-                    if (room.getPlayerList().length > 3) { // Está en 3 a modo de pruebas
+                    if (room.getPlayerList().length > 0) { // Está en 3 a modo de pruebas
                         playerData.statsUpdated = true; 
 
 						window.getUserStats(p.name)
 						.then(stats => {
 							console.log(`Estadísticas actuales de ${p.name}:`, stats);
-					
-							let puntosGanados = puntosPorPosicion[finalPosition - 1] || 0;
+							
+							const puntosPorPosicion = {
+								1: 25,
+								2: 18,
+								3: 15,
+								4: 12,
+								5: 10,
+								6: 8,
+								7: 6,
+								8: 4,
+								9: 2,
+								10: 1
+							};					
+							let puntosGanados = puntosPorPosicion[finalPosition] || 0;
 
-							let valor = (5 * ((finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)) +
-							(4 * ((finalPosition - 1 <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio)) +
-							(1 * ((finalPosition - 1 <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10)) +
+							let valor = (5 * ((finalPosition === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)) +
+							(4 * ((finalPosition <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio)) +
+							(1 * ((finalPosition <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10)) +
 							(0.1 * (stats.puntos + puntosGanados)) -
-							(0.07 * (stats.carrerasCompletadas + 1 - ((finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)))
+							(0.07 * (stats.carrerasCompletadas + 1 - ((finalPosition === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas)))
 					
 							// Actualización de estadísticas básicas
-							finalPosition = finalPosition - 1 // descubrir por qué esta variable se rompe tanto acá
 							window.updateStats(p.name, {
 								carrerasCompletadas: stats.carrerasCompletadas + 1,
-								carrerasGanadas: (finalPosition - 1 === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas,
-								carrerasPodio: (finalPosition - 1 <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
-								carrerasTop10: (finalPosition - 1 <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10,
+								carrerasGanadas: (finalPosition === 1) ? stats.carrerasGanadas + 1 : stats.carrerasGanadas,
+								carrerasPodio: (finalPosition <= 3) ? stats.carrerasPodio + 1 : stats.carrerasPodio,
+								carrerasTop10: (finalPosition <= 10) ? stats.carrerasTop10 + 1 : stats.carrerasTop10,
 								puntos: stats.puntos + puntosGanados,
 								// Cálculo del valor del jugador según la fórmula
 								valor: valor.toFixed(2)
 							});
+							console.log("Puntos ganados: ", puntosGanados)
+							console.log(finalPosition)
 							console.log(valor)
 						})
 						.catch(err => {
@@ -2094,9 +2095,9 @@ room.onPlayerChat = function(player, message) {
 							rankingMessage = `Estás en la posición ${playerPosition} con ${playerStatValue} ${stat}.`;
 							break;
 					}
-					room.sendAnnouncement(rankingMessage, player.id, 0xffffff, "normal", 1);
+					room.sendAnnouncement(rankingMessage, player.id, colors.lapChanged, fonts.lapChanged, 1);
 				} else {
-					room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, colors.mapInfo, "normal", 1);
+					room.sendAnnouncement(`No te encuentras en el ranking de ${stat} o tienes 0.`, player.id, colors.lapChanged, fonts.lapChanged, sounds.lapChanged);
 				}
 			})
 			.catch(err => {
