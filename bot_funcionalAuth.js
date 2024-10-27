@@ -305,7 +305,7 @@ var adminsAuth = [
 	"uWTZPBsVxGtIKAbzsGlI8dlwNJ4QgdiN2THIoJBHTvI",
 	"AF08JBZL_rzv388R9y5vEomqMofDSKR4zlvBmXJWzHw",
 	"w055pejEU7a7XFvzeqneJ38qj1bDVz6bVQrPKqyMa8I",
-	"4_PvrfdD6ZqykiTBYnY2KJI88-b3V7uXj2xvUCIYkyc",
+	"Ruj-q8CMsQYnmhX5XJ8eJMV0FID9y3d_8kCJQDW3pq4",
 	"BqH6UWxotyv0xMGMH-3uSiubrqc1s6OenTasr4Lnigo",
 	"8ZfOO7YQVNUROga993G_mN6V4QJEKE9yj6RURM6K2mM",
 	"BsbZS1aOsd0JLVzb2AKq7TBS4TPtWYkbcoUIkGYABOU",
@@ -553,13 +553,13 @@ bannedPlayers = [
 
 let max = 20;
 let trueism = false;
-let roomName = "FNA - F1 | LAB HOST 🏎️";
+let roomName = "🏎️🏆🏁 NUEVA VERSIÓN!! FORMULA 1 Argentina 🇦🇷 - Testeá la actualización! 🏁🏆🏎️";
 
 changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:false,maxPlayers:max, token: "thr1.AAAAAGcdMuMJwI7LTMwyvA.Nvw26fx6ahY", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:true,maxPlayers:max, token: "thr1.AAAAAGcdhLiDitenfLKNJA.dnqccIYIG9A", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -2695,5 +2695,5 @@ function changeMax() {
 }
 
 function changeRoomName() {
-	roomName = "FNA - F1 | LAB HOST 🏎️";
+	roomName = "🏎️🏆🏁 NUEVA VERSIÓN!! FORMULA 1 Argentina 🇦🇷 - Testeá la actualización! 🏁🏆🏎️";
 }
