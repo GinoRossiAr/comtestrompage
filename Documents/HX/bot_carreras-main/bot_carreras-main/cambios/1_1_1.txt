@@ -1,0 +1,29 @@
+- ** Se añadieron los siguientes circuitos: 
+    - Zandvoort
+    - Balaton
+    - Gilles Villeneuve
+    - Shangai
+    - Silverstone
+    - Wellington
+    - Santo Domingo
+    - Softendo Race Park
+    - Soproni
+    - Fuji
+    - Minsk
+    - Jeddah
+- Se corrigieron las grillas de todos los circuitos, ahora comparten una estructura similar.
+- Se añadieron nuevas notificaciones para los espectadores
+    - Notificación sobre el lider de la carrera
+    - Notificación sobre el ganador de la carrera
+- Se añadieron nuevas notificaciones para los jugadores que se unen a la sala:
+    - Notificación sobre el tipo de sesión actual
+- Se modificaron las notificaciones para las clasificaciones y carreras:
+    - Notificación para la pole provisional
+    - Notificación sobre el ganador de la carrera
+    - Notificaciones a cada piloto sobre su posición actual al iniciar una vuelta
+- Se añadió que la cámara de los espectadores siga al jugador que se colocó lider al iniciar una vuelta.
+- ** La selección de circuitos del modo público ahora es aleatoria.
+- Se añadieron los comandos !speed, !times (clasificación), !fl (carrera), !bb, !nv.
+- *** Se añadieron las banderas de los países de los circuitos en los colores de cada piloto
+
+- Parte del código fue refactorizado/mejorado
