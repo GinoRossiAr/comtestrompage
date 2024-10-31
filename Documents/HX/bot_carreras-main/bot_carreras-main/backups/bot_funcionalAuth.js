@@ -153,7 +153,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:true,maxPlayers:max, token: "thr1.AAAAAGcjBThobOMP3yLWZQ.-m98nPcIUlc", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:true,maxPlayers:max, token: "thr1.AAAAAGcjYMUQYHshCy8i6w.H5AcHuQSiAk", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
