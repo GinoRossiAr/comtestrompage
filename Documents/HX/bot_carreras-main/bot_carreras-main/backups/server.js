@@ -31,10 +31,12 @@ async function sendRaceResultsEmbed(webhookClientCarreras, raceResults, _Circuit
       tiempo: _Circuit.BestTime[0]
   } : null;
 
+  const nombreCircuito = _Circuit.Name;
+
   // Crear el embed de resultados
   const embed = new EmbedBuilder()
       .setTitle('🏁 Resultados de la Carrera de Fórmula 1')
-      .setDescription('¡Finalizó una nueva carrera de FNA Public Host! Ver los resultados:')
+      .setDescription(`¡Finalizó una nueva carrera de FNA Public Host! - Circuito: ${nombreCircuito}`)
       .addFields(
           {
               name: 'Clasificación de la Carrera',
@@ -48,7 +50,7 @@ async function sendRaceResultsEmbed(webhookClientCarreras, raceResults, _Circuit
           },
           {
               name: '⏱️ Vuelta Rápida',
-              value: fastestLap ? `**${fastestLap.usuario}** - ${fastestLap.tiempo.toFixed(2)} segundos` : 'No disponible',
+              value: fastestLap ? `**${fastestLap.usuario}** - ${fastestLap.tiempo.toFixed(3)} segundos` : 'No disponible',
               inline: false
           }
       )
@@ -70,7 +72,7 @@ async function sendRaceResultsEmbed(webhookClientCarreras, raceResults, _Circuit
 async function sendAdminRequestToDiscord(webhookClient, username, razon) {
   const embed = new EmbedBuilder()
       .setTitle("Solicitud de Admin")
-      .setDescription(`Usuario: ${username}\nRazón: ${razon}`)
+      .setDescription(`Usuario: ${username}\nRazón: ${razon} - @Staff`)
       .setColor(0xff0000) // Color rojo para la solicitud
       .setTimestamp();
 
