@@ -11,77 +11,77 @@ const webhookClientCarreras = new WebhookClient({ url: 'https://discord.com/api/
 const webhookMonitoreoIP = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301681741186207887/tQ_tPIoMJ3ebXBW1v1_IhPOzl_QTfOblv2J0dukYnq0x2YsUsgUMmtPwdtfc5kLg2dcq'});
 const webhookRecords = new WebhookClient({ url: 'https://discord.com/api/webhooks/1302326147740340356/yJOVAX4G9C-jbc7xaADTT4sUttyfUobfS7K-YPiI1w2gCjOVuqg1tObCvzXoJzWBK-rO'});
 
-let token = "MTMwMTY5MjA4NjQ3ODcwNDY5Mg.GBbu_P.dOMgaTaxgXcMpE2VLsi510IOU4REPDKlTPOIB8"; 
+//let token = "MTMwMTY5MjA4NjQ3ODcwNDY5Mg.GwlwzR.PSnLBXrYF1N2baQrvfiD7eEsIccXew7d2CYUtY"; 
 // Conexión DS bot 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] }); 
-const cooldowns = new Map(); // Línea para definir la variable cooldowns
-client.once(Events.ClientReady, readyClient => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-});
+//const client = new Client({ intents: [GatewayIntentBits.Guilds] }); 
+//const cooldowns = new Map(); // Línea para definir la variable cooldowns
+//client.once(Events.ClientReady, readyClient => {
+//	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+//});
 
 // Log in to Discord with your client's token
-client.login(token);
+//client.login(token);
 
-const topCommand = new SlashCommandBuilder()
-  .setName('top')
-  .setDescription('Muestra el ranking de puntos de los usuarios');
+// const topCommand = new SlashCommandBuilder()
+//   .setName('top')
+//   .setDescription('Muestra el ranking de puntos de los usuarios');
 
-// Registra el comando al iniciar el bot
-client.on('ready', async () => {
-  await client.application.commands.create(topCommand);
-  //console.log('Comando /top registrado');
-});
+// // Registra el comando al iniciar el bot
+// client.on('ready', async () => {
+//   await client.application.commands.create(topCommand);
+//   //console.log('Comando /top registrado');
+// });
 
-// Maneja la interacción con el comando
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand() || interaction.commandName !== 'top') return;
+// // Maneja la interacción con el comando
+// client.on('interactionCreate', async interaction => {
+//   if (!interaction.isCommand() || interaction.commandName !== 'top') return;
 
-  // Control de cooldown para evitar spam
-  const now = Date.now();
-  const cooldownAmount = 10 * 1000; // 10 segundos de cooldown
+//   // Control de cooldown para evitar spam
+//   const now = Date.now();
+//   const cooldownAmount = 10 * 1000; // 10 segundos de cooldown
 
-  if (cooldowns.has(interaction.user.id)) {
-    const expirationTime = cooldowns.get(interaction.user.id) + cooldownAmount;
-    if (now < expirationTime) {
-      const timeLeft = (expirationTime - now) / 1000;
-      return interaction.reply(`Por favor, espera ${timeLeft.toFixed(1)} segundos antes de volver a usar el comando.`);
-    }
-  }
+//   if (cooldowns.has(interaction.user.id)) {
+//     const expirationTime = cooldowns.get(interaction.user.id) + cooldownAmount;
+//     if (now < expirationTime) {
+//       const timeLeft = (expirationTime - now) / 1000;
+//       return interaction.reply(`Por favor, espera ${timeLeft.toFixed(1)} segundos antes de volver a usar el comando.`);
+//     }
+//   }
 
-  // Establece el tiempo de cooldown
-  cooldowns.set(interaction.user.id, now);
+//   // Establece el tiempo de cooldown
+//   cooldowns.set(interaction.user.id, now);
 
-  try {
-    // Obtiene los usuarios ordenados por puntos en orden descendente, limitando al top 30.
-    const topUsers = await User.find()
-      .sort({ 'stats.puntos': -1 })
-      .limit(50)
-      .exec();
+//   try {
+//     // Obtiene los usuarios ordenados por puntos en orden descendente, limitando al top 30.
+//     const topUsers = await User.find()
+//       .sort({ 'stats.puntos': -1 })
+//       .limit(50)
+//       .exec();
 
-    // Genera el mensaje de ranking.
-    let rankingMessage = '🏆 **Top 50 Puntos** 🏆\n';
-    topUsers.forEach((user, index) => {
-      let medalEmoji = '';
-      if (index === 0) {
-        medalEmoji = '🥇'; // Oro
-      } else if (index === 1) {
-        medalEmoji = '🥈'; // Plata
-      } else if (index === 2) {
-        medalEmoji = '🥉'; // Bronce
-      } else {
-        medalEmoji = `**#${index + 1}**`; // Para el resto
-      }
+//     // Genera el mensaje de ranking.
+//     let rankingMessage = '🏆 **Top 50 Puntos** 🏆\n';
+//     topUsers.forEach((user, index) => {
+//       let medalEmoji = '';
+//       if (index === 0) {
+//         medalEmoji = '🥇'; // Oro
+//       } else if (index === 1) {
+//         medalEmoji = '🥈'; // Plata
+//       } else if (index === 2) {
+//         medalEmoji = '🥉'; // Bronce
+//       } else {
+//         medalEmoji = `**#${index + 1}**`; // Para el resto
+//       }
 
-      rankingMessage += `${medalEmoji} ${user.usuario}: ${user.stats.puntos} puntos\n`;
-    });
+//       rankingMessage += `${medalEmoji} ${user.usuario}: ${user.stats.puntos} puntos\n`;
+//     });
 
-    // Envía el mensaje de ranking en el canal donde se usó el comando.
-    await interaction.reply({ content: rankingMessage, ephemeral: false }); 
-  } catch (error) {
-    console.error('Error al obtener el top de puntos:', error);
-    await interaction.reply('Hubo un error al obtener el ranking. Inténtalo de nuevo más tarde.');
-  }
-});
+//     // Envía el mensaje de ranking en el canal donde se usó el comando.
+//     await interaction.reply({ content: rankingMessage, ephemeral: false }); 
+//   } catch (error) {
+//     console.error('Error al obtener el top de puntos:', error);
+//     await interaction.reply('Hubo un error al obtener el ranking. Inténtalo de nuevo más tarde.');
+//   }
+// });
 
 
 async function sendRaceResultsEmbed(webhookClientCarreras, raceResults, _Circuit) {
