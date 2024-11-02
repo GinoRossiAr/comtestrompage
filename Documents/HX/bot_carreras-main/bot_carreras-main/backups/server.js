@@ -11,7 +11,7 @@ const webhookClientCarreras = new WebhookClient({ url: 'https://discord.com/api/
 const webhookMonitoreoIP = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301681741186207887/tQ_tPIoMJ3ebXBW1v1_IhPOzl_QTfOblv2J0dukYnq0x2YsUsgUMmtPwdtfc5kLg2dcq'});
 const webhookRecords = new WebhookClient({ url: 'https://discord.com/api/webhooks/1302326147740340356/yJOVAX4G9C-jbc7xaADTT4sUttyfUobfS7K-YPiI1w2gCjOVuqg1tObCvzXoJzWBK-rO'});
 
-let token = "MTMwMTY5MjA4NjQ3ODcwNDY5Mg.Gjs5_o.4FjilfhShs59m1EjaAUKOFSvazClkMwI_UN-Uc"; 
+let token = "MTMwMTY5MjA4NjQ3ODcwNDY5Mg.GBbu_P.dOMgaTaxgXcMpE2VLsi510IOU4REPDKlTPOIB8"; 
 // Conexión DS bot 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] }); 
 const cooldowns = new Map(); // Línea para definir la variable cooldowns
