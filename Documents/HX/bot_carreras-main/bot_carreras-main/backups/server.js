@@ -264,8 +264,7 @@ const Lap = mongoose.model('Lap', lapSchema);
 
 async function bot() {
   const browser = await puppeteer.launch({
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    headless: false,
+    executablePath: '/usr/bin/chromium-browser',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
