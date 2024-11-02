@@ -1,8 +1,88 @@
 import puppeteer from 'puppeteer';
 import mongoose from 'mongoose';
-import { WebhookClient, EmbedBuilder } from 'discord.js';
-const webhookClient = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301392600825204777/HuYbLqmgTEtb7YOu5xvnAZ1LV3PEav_ZU3O1FhtrqOH1kwbv_9Nl5o1kz576y5horaUN' });
+import geoIp2 from 'geoip-lite2';
+//import fetch from 'node-fetch';
+//import FormData from 'form-data';
+import { WebhookClient, EmbedBuilder, Client, Events, GatewayIntentBits, SlashCommandBuilder } from 'discord.js';
+
+// Webhooks discord
+const webhookClient = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301503178163880029/GR_gl0CZhi51uZRBirVpJXspktaE2Z7NMEOZjT3QK0Lz_Y1rdxYDamS1vCh7EcCjPbGL' });
 const webhookClientCarreras = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301391339304255550/ygeclckUC5f3ngPAd28xaR4PRKx3IkJQ0nIkoG-TIcY2NzyT7O7ZEQWMyfB5HqcEPaD_'});
+const webhookMonitoreoIP = new WebhookClient({ url: 'https://discord.com/api/webhooks/1301681741186207887/tQ_tPIoMJ3ebXBW1v1_IhPOzl_QTfOblv2J0dukYnq0x2YsUsgUMmtPwdtfc5kLg2dcq'});
+const webhookRecords = new WebhookClient({ url: 'https://discord.com/api/webhooks/1302326147740340356/yJOVAX4G9C-jbc7xaADTT4sUttyfUobfS7K-YPiI1w2gCjOVuqg1tObCvzXoJzWBK-rO'});
+
+let token = "MTMwMTY5MjA4NjQ3ODcwNDY5Mg.Gjs5_o.4FjilfhShs59m1EjaAUKOFSvazClkMwI_UN-Uc"; 
+// Conexión DS bot 
+const client = new Client({ intents: [GatewayIntentBits.Guilds] }); 
+const cooldowns = new Map(); // Línea para definir la variable cooldowns
+client.once(Events.ClientReady, readyClient => {
+	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+});
+
+// Log in to Discord with your client's token
+client.login(token);
+
+const topCommand = new SlashCommandBuilder()
+  .setName('top')
+  .setDescription('Muestra el ranking de puntos de los usuarios');
+
+// Registra el comando al iniciar el bot
+client.on('ready', async () => {
+  await client.application.commands.create(topCommand);
+  //console.log('Comando /top registrado');
+});
+
+// Maneja la interacción con el comando
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isCommand() || interaction.commandName !== 'top') return;
+
+  // Control de cooldown para evitar spam
+  const now = Date.now();
+  const cooldownAmount = 10 * 1000; // 10 segundos de cooldown
+
+  if (cooldowns.has(interaction.user.id)) {
+    const expirationTime = cooldowns.get(interaction.user.id) + cooldownAmount;
+    if (now < expirationTime) {
+      const timeLeft = (expirationTime - now) / 1000;
+      return interaction.reply(`Por favor, espera ${timeLeft.toFixed(1)} segundos antes de volver a usar el comando.`);
+    }
+  }
+
+  // Establece el tiempo de cooldown
+  cooldowns.set(interaction.user.id, now);
+
+  try {
+    // Obtiene los usuarios ordenados por puntos en orden descendente, limitando al top 30.
+    const topUsers = await User.find()
+      .sort({ 'stats.puntos': -1 })
+      .limit(50)
+      .exec();
+
+    // Genera el mensaje de ranking.
+    let rankingMessage = '🏆 **Top 50 Puntos** 🏆\n';
+    topUsers.forEach((user, index) => {
+      let medalEmoji = '';
+      if (index === 0) {
+        medalEmoji = '🥇'; // Oro
+      } else if (index === 1) {
+        medalEmoji = '🥈'; // Plata
+      } else if (index === 2) {
+        medalEmoji = '🥉'; // Bronce
+      } else {
+        medalEmoji = `**#${index + 1}**`; // Para el resto
+      }
+
+      rankingMessage += `${medalEmoji} ${user.usuario}: ${user.stats.puntos} puntos\n`;
+    });
+
+    // Envía el mensaje de ranking en el canal donde se usó el comando.
+    await interaction.reply({ content: rankingMessage, ephemeral: false }); 
+  } catch (error) {
+    console.error('Error al obtener el top de puntos:', error);
+    await interaction.reply('Hubo un error al obtener el ranking. Inténtalo de nuevo más tarde.');
+  }
+});
+
 
 async function sendRaceResultsEmbed(webhookClientCarreras, raceResults, _Circuit) {
    // Asegurarse de que raceResults es un array
@@ -81,6 +161,43 @@ async function sendAdminRequestToDiscord(webhookClient, username, razon) {
       .catch(err => console.error("Error al enviar solicitud de admin a Discord:", err));
 }
 
+async function enviarIPaDiscord(webhookMonitoreoIP, username, conn) {
+  let ipUsuario = Buffer.from(conn, 'hex').toString('utf8');
+  const geo = geoIp2.lookup(ipUsuario);
+  let descripcion = ""
+  if(geo) {
+    const ciudad = geo.city;
+    const pais = geo.country;
+    descripcion = `Ingresó el usuario ${username}, con IP ${ipUsuario} - localizado en ${ciudad}, ${pais} - Conn: ${conn}`;
+  } else {
+    descripcion = `Ingresó el usuario ${username}, con IP ${ipUsuario} - Conn: ${conn}`;
+  }
+
+  const embed = new EmbedBuilder()
+  .setTitle("Monitoreo")
+  .setDescription((descripcion))
+  .setColor(0xff0000)
+  .setTimestamp(); 
+  webhookMonitoreoIP.send({ embeds: [embed] })
+      .then(() => console.log("Se envío información del usuario ", username))
+      .catch(err => console.error("Error al enviar información de usuario entrante a Discord", err));
+}
+
+async function enviarVueltaRapidaDiscord(webhookRecords, usuario, circuito, tiempo) {
+  const embed = new EmbedBuilder()
+      .setTitle("¡Nuevo Récord de host! | New host record!")
+      .setDescription(`🏎️ **Piloto:** ${usuario}\n🌍 **Circuito:** ${circuito}\n⏱️ **Tiempo:** ${tiempo}`)
+      .setColor(0x00ff00) 
+      .setTimestamp();
+
+  try {
+    await webhookRecords.send({ embeds: [embed] });
+    console.log("Anuncio de nuevo récord global enviado a Discord");
+  } catch (err) {
+    console.error("Error al enviar anuncio de récord global a Discord:", err);
+  }
+}
+
 
 // Conectar a MongoDB Atlas usando Mongoose
 const uri = "mongodb+srv://charlesf1:Xh1nEKFyUFLk5pwl@cluster0.1inlc.mongodb.net/";
@@ -147,7 +264,8 @@ const Lap = mongoose.model('Lap', lapSchema);
 
 async function bot() {
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    headless: false,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
@@ -164,6 +282,15 @@ async function bot() {
     // Llama a la función sendRaceResultsEmbed y pasa los parámetros necesarios
     await sendAdminRequestToDiscord(webhookClient, username, razon);
   });
+
+  await page.exposeFunction('enviarIPaDiscord', async (username, conn) => {
+    await enviarIPaDiscord(webhookMonitoreoIP, username, conn);
+  });
+
+  await page.exposeFunction('enviarVueltaRapidaDiscord', async (usuario, circuito, tiempo) => {
+    await enviarVueltaRapidaDiscord(usuario, circuito, tiempo);
+  });
+
   // Exponer la función saveLap para ser llamada desde el script en el navegador
   await page.exposeFunction('saveLap', async (usuario, circuito, tiempo) => {
     try {
@@ -227,7 +354,7 @@ async function bot() {
 await page.exposeFunction('loadBannedPlayers', async () => {
   try {
       const bannedUsers = await BannedUser.find(); // Obtener baneos de la base de datos
-      console.log("Lista de baneados cargada: ", bannedUsers);
+      //console.log("Lista de baneados cargada: ", bannedUsers);
       return bannedUsers.map(user => ({
           name: user.name,
           conn: user.conn
@@ -315,14 +442,14 @@ await page.exposeFunction('updateBannedPlayers', async () => {
         if (user) {
             user.loggedIn = true;
             await user.save();
-            console.log(`${usuario} ha iniciado sesión.`);
+            //console.log(`${usuario} ha iniciado sesión.`);
             return { success: true };  // Retornamos un objeto en vez de solo true
         } else {
-            console.log(`Usuario o contraseña incorrectos para ${usuario}.`);
+            //console.log(`Usuario o contraseña incorrectos para ${usuario}.`);
             return { success: false, message: 'Usuario o contraseña incorrectos.' };  // Retornamos un objeto con más información
         }
     } catch (err) {
-        console.error(`Error al iniciar sesión para ${usuario}:`, err);
+        //console.error(`Error al iniciar sesión para ${usuario}:`, err);
         return { success: false, message: 'Error al iniciar sesión.' };  // Retornamos también el mensaje de error
     }
 });
@@ -412,7 +539,7 @@ await page.exposeFunction('updateStats', async (usuario, stats) => {
 
         // Guarda los cambios en la base de datos
         await user.save();
-        console.log(`Estadísticas de ${usuario} actualizadas correctamente.`);
+        //console.log(`Estadísticas de ${usuario} actualizadas correctamente.`);
       } else {
         console.error(`Usuario ${usuario} no encontrado.`);
       }

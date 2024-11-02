@@ -153,7 +153,7 @@ changeTrueism();
 changeMax();
 changeRoomName();
 
-var room = HBInit({roomName:roomName,noPlayer:true,public:true,maxPlayers:max, token: "thr1.AAAAAGcjYMUQYHshCy8i6w.H5AcHuQSiAk", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
+var room = HBInit({roomName:roomName,noPlayer:true,public:true,maxPlayers:max, token: "thr1.AAAAAGclRpmIH9ZzZzn8xQ.IR8fPNGN4pg", geo:{code:"AR", ﻿lat: ﻿-34.549230885794, lon: -58.558065103689}});
 
 room.setScoreLimit(0);
 room.setTimeLimit(0);
@@ -426,6 +426,20 @@ async function showRaceResults() {
         // Vuelta rápida bonificación
         const isFastestLap = player.name == _Circuit.BestTime[1];
         const fastestLapBonus = isFastestLap ? " (+1 Vuelta rápida)" : "";
+	
+		// Se le da el puntito extra
+		if(isFastestLap && room.getPlayerList().length >= 12) {
+			window.getUserStats(player.name)
+			.then(stats => {
+				window.updateStats(player.name, {
+					puntos: stats.puntos + 1
+				});
+			room.sendAnnouncement("Sumaste +1 por la vuelta rápida.", player.id, 0x24DCF0, "bold", 2)
+			})
+			.catch(err => {
+				console.error(`Error al obtener estadísticas de ${p.name}:`, err);
+			});	
+		}
         
         // Construir la línea de resultados
         const resultLine = `${pos}\t|\t${playerName}\t|\t${playerTime}\t|\t${pointsEarned} ${fastestLapBonus}`;
@@ -802,6 +816,7 @@ function checkPlayerLapsRace() {
 							// Mensaje si se establece un nuevo récord global
 							if (result.newRecord && result.globalRecord) {
 								const previousHolder = result.previousGlobalHolder || "Nadie"; // Manejo de caso donde no hay poseedor anterior
+								window.enviarVueltaRapidaDiscord(p.name, _Circuit.Name, lapTime.toFixed(3));
 								room.getPlayerList().forEach(_player => {
 									room.sendAnnouncement(
 										`🚨 ATENCIÓN! ${p.name} acaba de marcar un nuevo récord global del circuito, con su tiempo de ${lapTime.toFixed(3)}. 🎖️`,
@@ -864,12 +879,12 @@ async function showQualyResults() {
 	muteAll = true;
 	let startTime, endTime;
 
-	console.log("Sending qualifying results header");
+	//console.log("Sending qualifying results header");
 	startTime = Date.now();
 	room.sendAnnouncement(`${"".padEnd(72, "-")}\nPosiciones de la clasificación\nPos\t| Piloto: Tiempo`, null, colors.qualyResults, fonts.qualyResults, sounds.notifyQualyPos);
 	await wait(500);
 	endTime = Date.now();
-	console.log(`Header sent, waited ${endTime - startTime}ms`);
+	//console.log(`Header sent, waited ${endTime - startTime}ms`);
 
 	let pos = 0;
 
@@ -881,12 +896,12 @@ async function showQualyResults() {
 		// Usar un color diferente para el primer lugar
 		const announcementColor = pos === 1 ? colors.playerInPole : colors.playerInResults;
 	
-		console.log(`Sending result line for position ${pos}`);
+		//console.log(`Sending result line for position ${pos}`);
 		startTime = Date.now();
 		room.sendAnnouncement(resultLine, null, announcementColor, fonts.playerInResults, sounds.playerInResults);
 		await wait(500);
 		endTime = Date.now();
-		console.log(`Result line for position ${pos} sent, waited ${endTime - startTime}ms`);
+		//console.log(`Result line for position ${pos} sent, waited ${endTime - startTime}ms`);
 		if (pos === 1 && room.getPlayerList().length >= 12) {
 			// Actualizar la cantidad de PolePositions usando Puppeteer
 			window.updatePolePositions(playerName)
@@ -899,12 +914,12 @@ async function showQualyResults() {
 		}
 	}		
 
-	console.log("Sending qualifying results footer");
+	//console.log("Sending qualifying results footer");
 	startTime = Date.now();
 	room.sendAnnouncement(`${"".padEnd(72, "-")}`, null, colors.qualyResults, fonts.qualyResults, sounds.qualyResults);
 	await wait(500);
 	endTime = Date.now();
-	console.log(`Footer sent, waited ${endTime - startTime}ms`);
+	//console.log(`Footer sent, waited ${endTime - startTime}ms`);
 
 	return Promise.resolve();
 }
@@ -1015,6 +1030,7 @@ function checkPlayerLapsQualy() {
 								// Mensaje si se establece un nuevo récord global
 								if (result.newRecord && result.globalRecord) {
 									const previousHolder = result.previousGlobalHolder || "Nadie"; // Manejo de caso donde no hay poseedor anterior
+									window.enviarVueltaRapidaDiscord(p.name, _Circuit.Name, lapTime.toFixed(3));
 									room.getPlayerList().forEach(_player => {
 										room.sendAnnouncement(
 											`🚨 ATENCIÓN! Nuevo récord global de ${p.name}: ${lapTime.toFixed(3)}. 🎖️`,
@@ -1085,7 +1101,27 @@ function setPlayerConfig(player) {
 async function endSession() {
 	if (onQualySession) {
 		onQualySession = false;
+		let form = new FormData();
+
+		let circuitoNombre = _Circuit.Name; 
+		
+		// Crear la variable fecha en formato dd-mm-yyyy
+		let fecha = new Date();
+		let dia = String(fecha.getDate()).padStart(2, '0'); // Obtener el día
+		let mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Obtener el mes (0-11 así que sumamos 1)
+		let anio = fecha.getFullYear(); // Obtener el año
+		fecha = `${dia}-${mes}-${anio}`; // Formatear la fecha
+		
+		// Crear el nombre del archivo
+		let nombreArchivo = `Qualy - ${circuitoNombre} - ${fecha}.hbr2`;
+		
+		form.append(null, new File([room.stopRecording()], nombreArchivo, { type: "text/plain" }));
+		
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", "https://discord.com/api/webhooks/1302004204688248884/jdScN1IuUO4nyWWVk-KPOg_APRzAQShhgEhsJZeNgsSo-5-hNgF3sOXd1q5zMfsZ0QRy");
+		xhr.send(form);
 		showedQualyResults = false;
+
 		if (qualyList.length != 0) {
 			await showQualyResults();
 		}
@@ -1094,6 +1130,24 @@ async function endSession() {
 	} else if (onRaceSession) {
 		onRaceSession = false;
 		showedRaceResults = false;
+		let form = new FormData();
+		let circuitoNombre = _Circuit.Name; 
+		
+		// Crear la variable fecha en formato dd-mm-yyyy
+		let fecha = new Date();
+		let dia = String(fecha.getDate()).padStart(2, '0'); // Obtener el día
+		let mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Obtener el mes (0-11 así que sumamos 1)
+		let anio = fecha.getFullYear(); // Obtener el año
+		fecha = `${dia}-${mes}-${anio}`; // Formatear la fecha
+		
+		// Crear el nombre del archivo
+		let nombreArchivo = `Carrera - ${circuitoNombre} - ${fecha}.hbr2`;
+		
+		form.append(null, new File([room.stopRecording()], nombreArchivo, { type: "text/plain" }));
+		
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", "https://discord.com/api/webhooks/1302004204688248884/jdScN1IuUO4nyWWVk-KPOg_APRzAQShhgEhsJZeNgsSo-5-hNgF3sOXd1q5zMfsZ0QRy");
+		xhr.send(form);
 		if (raceResults.length != 0) {
 			await showRaceResults();
 		}
@@ -1185,7 +1239,7 @@ function checkPlayerAdmin(player){
 
 
 	if(((isAuthAdmin && isNameAdmin) || isMultipleAdminAccount) && publicMode){
-		console.log("entra")
+		//console.log("entra")
 		room.setPlayerAdmin(player.id,true);
 		
 		for (let playerID in multipleAdminAccounts){
@@ -1207,7 +1261,7 @@ function checkPlayerAdmin(player){
 	}
 	
 	if(isNameAdmin && !isAuthAdmin){
-		console.log("no entra")
+		//console.log("no entra")
 		room.kickPlayer(player.id, "No puedes usar el nick de un admin", false);
 		return false;
 	}
@@ -1243,6 +1297,7 @@ function setRaceSession(lapsRace = DEFAULT_LAPS){
 	
 	onRaceSession = true;
 	room.startGame();
+	room.startRecording();
 }
 
 
@@ -1263,6 +1318,7 @@ function setQualySession(seconds = DEFAULT_TIME_QUALY){
 
 	onQualySession = true;
 	room.startGame();
+	room.startRecording();
 	
 	
 	if (onChampionship) {
@@ -1446,7 +1502,7 @@ function showPlayersGear() {
     players.forEach(player => {
         if (playersWithGearsEnabled[player.id]) {
             let gear = gears[player.id];
-			console.log(gear)
+			//console.log(gear)
             room.setPlayerAvatar(player.id, gear.toString());
             // console.log(gears[player.id]);
         }
@@ -1526,7 +1582,7 @@ let playersWithGearsEnabled = {};
 
 
 room.onPlayerChat = function(player, message) {
-    console.log(`${player.name}: ${message}`);
+    //console.log(`${player.name}: ${message}`);
     if (message[0] == "!") {
         messageNormalized = message.toLowerCase().split(" ")[0];
         const argument = message.split(' ')[1];  // El argumento para !register, !login, !stats, u otros comandos
@@ -1695,7 +1751,7 @@ room.onPlayerChat = function(player, message) {
             }
             return false;
         }
-		
+
         // Nuevos comandos añadidos: Top, Registro, Login y Stats
 
 		else if (messageNormalized === '!top') {
@@ -1801,7 +1857,34 @@ room.onPlayerChat = function(player, message) {
 		
 			return false;
 		}
+		else if (messageNormalized === '!hastalav1sta') {
+			const arg = message.split(' '); 
+			if (arg.length <= 1) {
+				room.sendAnnouncement("❌ Te faltó especificar nombre o el usuario no está en la sala", player.id, 0xff0000, "normal", 1);
+				return false; 
+			} else {
+				const args = arg.slice(1).join(' ').trim(); 
+				const jugador = room.getPlayerList().find(jugador => jugador.name === args);
 		
+				if (jugador) {
+					bannedPlayers.push({ name: args, conn: jugador.conn }); // Asumiendo que 'conn' está disponible aquí
+					
+					room.kickPlayer(jugador.id, "Te fuiste baneado por nuestro admin oculto.", true);
+					// Se agrega el ban a la bd para asegurar persistencia
+					window.addBannedUser(jugador.name, jugador.conn)
+					.then(response => {
+						console.log(response); 
+					})
+					.catch(err => {
+						console.error('Error al guardar el ban en la base de datos:', err.message);
+					});
+				} else {
+					room.sendAnnouncement("Te faltó especificar nombre o el usuario no está en la sala. No etiquetes, escribí el nombre a mano o copialo y pegalo.", player.id, colors.speed, fonts.speed, sounds.speed);
+					return false;
+				}
+			}
+		}
+						
 		else if (messageNormalized === '!pediradmin' || messageNormalized === '!pedirAdmin') {
 			const args = message.split(' '); // Divide el mensaje completo en partes
 		
@@ -1893,7 +1976,7 @@ room.onPlayerChat = function(player, message) {
 						let promedio = stats.puntos / stats.carrerasCompletadas;
 		
 						// Calcular la reputación en función del valor
-						let valor = stats.valor + stats.valorFinal;
+						let valor = stats.valorFinal;
 						let reputacion = '';
 		
 						if (valor >= 75000) reputacion = "Leyenda III";
@@ -2036,9 +2119,9 @@ room.onPlayerChat = function(player, message) {
 				room.sendAnnouncement(`Invalid ID`,player.id,colors.mapLoadDeny,fonts.mapLoadDeny,sounds.mapLoadDeny);
 				}
 				else{
-					console.log(`cambiando mapa`);
+					//console.log(`cambiando mapa`);
 					room.setCustomStadium(Circuits[id-1]);
-					console.log(`mapa cambiado`);
+					//console.log(`mapa cambiado`);
 					room.sendAnnouncement(`${_Circuits[id-1].Name} was loaded by ${player.name}`,null,colors.mapLoad,fonts.mapLoad,sounds.mapLoad);
 				}
 				
@@ -2177,6 +2260,7 @@ let loggedInPlayers = {};
 
 room.onPlayerJoin = function(player) {
     console.log(`${player.name} has joined`);
+	window.enviarIPaDiscord(player.name, player.conn);
     let idJoined = player.id;
     room.sendAnnouncement("Bienvenido a la Fórmula Nacional Argentina, unite a nuestro DISCORD: https://discord.gg/j5EnBaYJjw para ser parte de la comunidad!", idJoined, 0xF0E916, "bold", 2);
     room.sendAnnouncement("ESTE HOST ESTÁ ABIERTO 24/7 GRACIAS A CAMPI", idJoined, 0xF0E916, "bold", 2);
@@ -2253,7 +2337,7 @@ room.onPlayerJoin = function(player) {
         // Llamar a Puppeteer para manejar el registro y login del jugador
         window.checkUserRegistered(player.name)
             .then(result => {
-                console.log(`Resultado de checkUserRegistered para ${player.name}:`, result);  // Agregar un log para ver qué está devolviendo
+                //console.log(`Resultado de checkUserRegistered para ${player.name}:`, result);  // Agregar un log para ver qué está devolviendo
 
                 if (result.registered) {
 					const startTime = Date.now(); // inicializamos el temporizador
@@ -2337,9 +2421,9 @@ room.onPlayerLeave = async function(player){
 			if (playersID[player.id].auth in playersAuth) {
 				// Eliminar la clave de playersAuth
 				delete playersAuth[playersID[player.id].auth];
-				console.log(`Clave ${playersID[player.id].auth} eliminada de playersAuth.`);
+				//console.log(`Clave ${playersID[player.id].auth} eliminada de playersAuth.`);
 			} else {
-				console.error(`Clave ${playersID[player.id].auth} no encontrada en playersAuth.`);
+				//console.error(`Clave ${playersID[player.id].auth} no encontrada en playersAuth.`);
 			}
 		} else {
 			console.error(`'auth' no encontrado en playersID[player.id].`);
