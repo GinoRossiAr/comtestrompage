@@ -347,16 +347,16 @@ function followFirstPlayer() {
 			if (!leaderFinished) {
 				room.setDiscProperties(0, { x: leaderDiscProps.x, y: leaderDiscProps.y, radius: 0 });
 			} else {
-				room.setDiscProperties(0, { x: 0, y: 0 });
+				room.setDiscProperties(0, { x: _Circuit.ballSpawn[0], y: _Circuit.ballSpawn[1] });
 				// El líder terminó la carrera satisfactoriamente
 				stopCamera = true;
 			}
 		} else {
 			// El líder ya no está en el juego, manejar esto adecuadamente
-			room.setDiscProperties(0, { x: 0, y: 0 });
+			room.setDiscProperties(0, { x: _Circuit.ballSpawn[0], y: _Circuit.ballSpawn[1] });
 		}
 	} else {
-		room.setDiscProperties(0, { x: 0, y: 0 });
+		room.setDiscProperties(0, { x: _Circuit.ballSpawn[0], y: _Circuit.ballSpawn[1]});
 	}
 }
 
@@ -2484,7 +2484,8 @@ room.onStadiumChange = function(newStadiumName,byPlayer){
 				Angle: c.Angle,
 				Team: c.Team,
 				ID: c.ID,
-				qualyPosReset: c.qualyPosReset
+				qualyPosReset: c.qualyPosReset,
+				ballSpawn: c.ballSpawn
 			};
 			room.setTeamColors(c.Team,c.Angle,c.AvatarColor,c.MainColor);
 		}
